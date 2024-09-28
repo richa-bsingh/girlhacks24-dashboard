@@ -9,5 +9,5 @@ def get_mongo_data():
     songs_collection = db['Songs']  # Replace with your collection name
 
     # Fetch data from MongoDB and convert to a pandas DataFrame
-    songs_data = list(songs_collection.find())
-    return pd.DataFrame(songs_data)  # Return as a pandas DataFrame
+    # songs_data = list(songs_collection.find())
+    return songs_collection  # Return as a pandas DataFrame
