@@ -1,14 +1,14 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
-from db import get_mongo_data  # Import the MongoDB connection function
+from db import get_mongo_data, get_songs_data  # Import the MongoDB connection function
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.cluster import KMeans
 
 # Fetch data from MongoDB
-songs_data = get_mongo_data()
-songs_df = pd.DataFrame(list(songs_data.find()))
+songs_data = get_songs_data()
+songs_df = pd.json_normalize(songs_data)
 
 
 # Streamlit app layout
@@ -20,6 +20,11 @@ st.sidebar.title("Options")
 # Sidebar: Show raw data
 show_data = st.sidebar.checkbox("Show raw data")
 
+if show_data:
+    #songs_df_new = songs_df.drop(columns=['_id'])
+    st.subheader("Raw Data from MongoDB")
+    st.write(songs_df)
+
 # Sidebar: Select a chart to display
 chart_option = st.sidebar.selectbox(
     "Select a chart to display", 
@@ -28,7 +33,7 @@ chart_option = st.sidebar.selectbox(
 )
 
 # Sidebar: Artist filter
-artists = songs_df['artist'].unique()
+artists = songs_df['artists'].unique()
 selected_artist = st.sidebar.selectbox("Select an Artist", artists)
 
 # Sidebar: Plot height slider
@@ -49,8 +54,8 @@ if not music_jobs:
     # Bar chart: Most Played Songs
     if chart_option == "Top 10 Most Played Songs":
         st.subheader("Top 10 Most Played Songs")
-        top_songs = songs_df[['title', 'play_count']].sort_values('play_count', ascending=False).head(10)
-        fig_top_songs = px.bar(top_songs, x='title', y='play_count', title="Most Played Songs", height= plot_height)
+        top_songs = songs_df[['name', 'play_count']].sort_values('play_count', ascending=False).head(10)
+        fig_top_songs = px.bar(top_songs, x='name', y='play_count', title="Most Played Songs", height= plot_height)
         st.plotly_chart(fig_top_songs)
 
     # Pie chart: Genre Distribution
@@ -72,7 +77,7 @@ if not music_jobs:
     if chart_option == "Genre Popularity Over Time":    
         most_popular_song = songs_data.find_one(sort=[("play_count", -1)])
         popular_genre = most_popular_song["genre"]
-        popular_artist = most_popular_song["artist"]
+        popular_artist = most_popular_song["artists"]
         # Advanced Analytics: Genre Popularity Over Time
         def genre_popularity_over_time():
             genre_play_counts = songs_data.aggregate([
@@ -100,14 +105,14 @@ if not music_jobs:
 
     # Display filtered songs by selected artist
     st.subheader(f"Songs by {selected_artist}")
-    filtered_songs = songs_df[songs_df['artist'] == selected_artist]
+    filtered_songs = songs_df[songs_df['artists'] == selected_artist]
     filtered_songs = filtered_songs.drop(columns=['_id'])
     st.dataframe(filtered_songs)
 
     if chart_option == "Top 5 Artists by Play Count":
         def top_artists_ranking():
             top_artists = songs_data.aggregate([
-                {"$group": {"_id": "$artist", "total_plays": {"$sum": "$play_count"}}},
+                {"$group": {"_id": "$artists", "total_plays": {"$sum": "$play_count"}}},
                 {"$sort": {"total_plays": -1}},
                 {"$limit": 5}
             ])
@@ -125,9 +130,11 @@ if not music_jobs:
 
 if music_jobs:
     tab2, tab1 = st.tabs(["Music Industry Side Hustles", "Innovative Music Business Ideas"])
-    most_popular_song = songs_data.find_one(sort=[("play_count", -1)])
-    popular_genre = most_popular_song["genre"]
-    popular_artist = most_popular_song["artist"]
+    most_popular_song = max(songs_data, key=lambda x: x.get('play_count', 0))  # Use max() to find the song with the highest play_count
+
+    # Get details from the most popular song
+    popular_genre = most_popular_song.get("genre", "Unknown")
+    popular_artist = most_popular_song.get("artists", "Unknown")
     
     with tab1:
         st.subheader("Innovative Music Business Ideas")
@@ -152,11 +159,3 @@ if music_jobs:
         3. **Sell Beats Online**: Create and sell beats tailored to popular genres like {popular_genre}, which is performing well based on your data.
         4. **Music Blogging**: Start a blog focused on {popular_genre}, helping others discover new music while earning affiliate income from recommendations.
         """)
-
-
-        
-        
-        
-        
-        
-        
