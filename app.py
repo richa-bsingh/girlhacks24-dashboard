@@ -2,9 +2,6 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 from db import get_mongo_data, get_songs_data  # Import the MongoDB connection function
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.cluster import KMeans
 
 # Fetch data from MongoDB
 songs_data = get_songs_data()
@@ -74,34 +71,34 @@ if not music_jobs:
 
     
     # Example query to find the most popular genre and artist by play count
-    if chart_option == "Genre Popularity Over Time":    
-        most_popular_song = songs_data.find_one(sort=[("play_count", -1)])
-        popular_genre = most_popular_song["genre"]
-        popular_artist = most_popular_song["artists"]
-        # Advanced Analytics: Genre Popularity Over Time
-        def genre_popularity_over_time():
-            genre_play_counts = songs_data.aggregate([
-                {"$group": {
-                    "_id": {"genre": "$genre", "date": {"$dateToString": {"format": "%Y-%m", "date": "$timestamp"}}}, 
-                    "total_plays": {"$sum": "$play_count"}
-                }}
-            ])
+    # if chart_option == "Genre Popularity Over Time":    
+    #     most_popular_song = songs_data.find_one(sort=[("play_count", -1)])
+    #     popular_genre = most_popular_song["genre"]
+    #     popular_artist = most_popular_song["artists"]
+    #     # Advanced Analytics: Genre Popularity Over Time
+    #     def genre_popularity_over_time():
+    #         genre_play_counts = songs_data.aggregate([
+    #             {"$group": {
+    #                 "_id": {"genre": "$genre", "date": {"$dateToString": {"format": "%Y-%m", "date": "$timestamp"}}}, 
+    #                 "total_plays": {"$sum": "$play_count"}
+    #             }}
+    #         ])
             
-            # Convert to DataFrame
-            df = pd.DataFrame(list(genre_play_counts))
+    #         # Convert to DataFrame
+    #         df = pd.DataFrame(list(genre_play_counts))
             
-            # Split the '_id' column into 'genre' and 'date'
-            df[['genre', 'date']] = pd.DataFrame(df['_id'].tolist(), index=df.index)
-            df.drop(columns=['_id'], inplace=True)  # Drop the '_id' column
+    #         # Split the '_id' column into 'genre' and 'date'
+    #         df[['genre', 'date']] = pd.DataFrame(df['_id'].tolist(), index=df.index)
+    #         df.drop(columns=['_id'], inplace=True)  # Drop the '_id' column
 
-            plt.figure(figsize=(10,6))
-            sns.lineplot(data=df, x='date', y='total_plays', hue='genre')
-            plt.title('Genre Popularity Over Time')
-            plt.xticks(rotation=45)
-            plt.tight_layout()
-            st.pyplot()
-        genre_popularity_over_time()
-# 
+    #         plt.figure(figsize=(10,6))
+    #         sns.lineplot(data=df, x='date', y='total_plays', hue='genre')
+    #         plt.title('Genre Popularity Over Time')
+    #         plt.xticks(rotation=45)
+    #         plt.tight_layout()
+    #         st.pyplot()
+    #     genre_popularity_over_time()
+
 
     # Display filtered songs by selected artist
     st.subheader(f"Songs by {selected_artist}")
@@ -110,23 +107,10 @@ if not music_jobs:
     st.dataframe(filtered_songs)
 
     if chart_option == "Top 5 Artists by Play Count":
-        def top_artists_ranking():
-            top_artists = songs_data.aggregate([
-                {"$group": {"_id": "$artists", "total_plays": {"$sum": "$play_count"}}},
-                {"$sort": {"total_plays": -1}},
-                {"$limit": 5}
-            ])
-
-            # Convert to DataFrame
-            artist_df = pd.DataFrame(list(top_artists))
-
-            plt.figure(figsize=(10,6))
-            sns.barplot(data=artist_df, x='_id', y='total_plays')
-            plt.title('Top 5 Artists by Play Count')
-            plt.xticks(rotation=45)
-            plt.tight_layout()
-            st.pyplot()
-        top_artists_ranking()
+        st.subheader("Top 5 Artists by Play Count")
+        top_artists = songs_df.groupby('artists')['play_count'].sum().reset_index().sort_values('play_count', ascending=False).head(5)
+        fig_top_artists = px.bar(top_artists, x='artists', y='play_count', title="Top 5 Artists by Play Count", height=plot_height)
+        st.plotly_chart(fig_top_artists)
 
 if music_jobs:
     tab2, tab1 = st.tabs(["Music Industry Side Hustles", "Innovative Music Business Ideas"])
