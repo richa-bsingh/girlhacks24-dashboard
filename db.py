@@ -16,12 +16,12 @@ def get_mongo_data():
 
 
 # Base API URL
-BASE_API_URL = "https://909e-128-235-159-74.ngrok-free.app/"
+BASE_API_URL = "http://app.discofy.us:8000"
 
 # Function to fetch songs data from the updated API endpoint and return as DataFrame
 def get_songs_data():
     try:
-        response = requests.get(f"{BASE_API_URL}/songs/all_songs")
+        response = requests.get(f"{BASE_API_URL}/songs/all_songs?limit=600")
         response.raise_for_status()  # Raise error for bad status
         songs_data = response.json()
         

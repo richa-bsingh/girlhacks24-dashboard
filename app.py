@@ -13,10 +13,6 @@ st.sidebar.title("Options")
 # Sidebar: Show raw data
 show_data = st.sidebar.checkbox("Show raw data")
 
-if show_data:
-    #songs_df_new = songs_df.drop(columns=['_id'])
-    st.subheader("Raw Data from MongoDB")
-    st.write(songs_df)
 
 # Sidebar: Select a chart to display
 chart_option = st.sidebar.selectbox(
@@ -30,7 +26,7 @@ artists = songs_df['artists'].unique()
 selected_artist = st.sidebar.selectbox("Select an Artist", artists)
 
 # Sidebar: Plot height slider
-plot_height = st.sidebar.slider("Specify plot height", 200, 500, 250)
+plot_height = st.sidebar.slider("Specify plot height", 200, 500, 300)
 
 
 #Job empowerment Ideas
@@ -42,7 +38,7 @@ if not music_jobs:
     st.title("Music App Dashboard")
     # Show raw data if checkbox is selected
     if show_data:
-        songs_df_new = songs_df.drop(columns=['_id'])
+        songs_df_new = songs_df.drop(columns=['id'])
         st.subheader("Raw Data from MongoDB")
         st.write(songs_df)
 
@@ -64,8 +60,8 @@ if not music_jobs:
     if chart_option == "Song Distribution by Language":
         st.subheader("Song Distribution by Language")
         song_by_lang = songs_df.groupby('language').size().reset_index(name='counts')
-        fig_genre = px.pie(song_by_lang, values='counts', names='language', title="Song Distribution by Language")
-        st.plotly_chart(fig_genre)
+        fig_lang = px.pie(song_by_lang, values='counts', names='language', title="Song Distribution by Language")
+        st.plotly_chart(fig_lang)
 
     
     # Example query to find the most popular genre and artist by play count
@@ -101,7 +97,7 @@ if not music_jobs:
     # Display filtered songs by selected artist
     st.subheader(f"Songs by {selected_artist}")
     filtered_songs = songs_df[songs_df['artists'] == selected_artist]
-    filtered_songs = filtered_songs.drop(columns=['_id'])
+    filtered_songs = filtered_songs.drop(columns=['id'])
     st.dataframe(filtered_songs)
 
     if chart_option == "Top 5 Artists by Play Count":
