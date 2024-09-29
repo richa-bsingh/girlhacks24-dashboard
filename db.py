@@ -16,7 +16,7 @@ def get_mongo_data():
 
 
 # Base API URL
-BASE_API_URL = "https://4223-128-235-159-74.ngrok-free.app"
+BASE_API_URL = "https://909e-128-235-159-74.ngrok-free.app/"
 
 # Function to fetch songs data from the updated API endpoint and return as DataFrame
 def get_songs_data():
@@ -33,3 +33,17 @@ def get_songs_data():
     except requests.exceptions.RequestException as e:
         st.error(f"Error fetching songs: {e}")
         return pd.DataFrame()
+    
+def get_job_postings_data():
+    client = pymongo.MongoClient("mongodb+srv://richadb:mongodb123@cluster0.2f8jo.mongodb.net")
+    db = client['playlist-hack24']
+    job_postings = db['job_postings']
+
+    return job_postings
+
+def get_company_specialities_data():
+    client = pymongo.MongoClient("mongodb+srv://richadb:mongodb123@cluster0.2f8jo.mongodb.net")
+    db = client['playlist-hack24']
+    company_specialities = db['company_specialities']
+
+    return company_specialities

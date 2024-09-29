@@ -1,15 +1,11 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
-from db import get_mongo_data, get_songs_data  # Import the MongoDB connection function
+from db import get_mongo_data, get_songs_data , get_job_postings_data, get_company_specialities_data # Import the MongoDB connection function
 
 # Fetch data from MongoDB
 songs_data = get_songs_data()
 songs_df = pd.json_normalize(songs_data)
-
-
-# Streamlit app layout
-st.title("Music App Dashboard")
 
 # Sidebar Configuration
 st.sidebar.title("Options")
@@ -42,6 +38,8 @@ music_jobs = st.sidebar.button("Bridging Employment Gaps",type="primary")
 
 # Main Area
 if not music_jobs:
+    # Streamlit app layout
+    st.title("Music App Dashboard")
     # Show raw data if checkbox is selected
     if show_data:
         songs_df_new = songs_df.drop(columns=['_id'])
@@ -113,7 +111,8 @@ if not music_jobs:
         st.plotly_chart(fig_top_artists)
 
 if music_jobs:
-    tab2, tab1 = st.tabs(["Music Industry Side Hustles", "Innovative Music Business Ideas"])
+    st.title("Music-Related Job Insights & Company Specialities")
+    tab3, tab2, tab1 = st.tabs(["Top Job Titles in Music-Related Jobs", "Music Industry Side Hustles", "Innovative Music Business Ideas"])
     most_popular_song = max(songs_data, key=lambda x: x.get('play_count', 0))  # Use max() to find the song with the highest play_count
 
     # Get details from the most popular song
@@ -143,3 +142,67 @@ if music_jobs:
         3. **Sell Beats Online**: Create and sell beats tailored to popular genres like {popular_genre}, which is performing well based on your data.
         4. **Music Blogging**: Start a blog focused on {popular_genre}, helping others discover new music while earning affiliate income from recommendations.
         """)
+
+    with tab3:
+    # Kaagle dataset - linkedin job posting
+        # Load Kaggle dataset
+        job_postings = get_job_postings_data()
+        job_postings_df = pd.DataFrame(list(job_postings.find()))
+        # Preview the data
+        #st.write(kaggle_data.head())
+
+        company_specialities= get_company_specialities_data()
+        company_specialities_df = pd.DataFrame(list(company_specialities.find()))
+
+        # Filter for music-related job postings
+        music_keywords = ["music", "sound", "audio", "lesson", "tutor", "teacher"]
+        music_related_jobs = job_postings_df[
+            job_postings_df['title'].str.contains('|'.join(music_keywords), case=False, na=False) 
+            #  | job_postings_df['description'].str.contains('|'.join(music_keywords), case=False, na=False)
+        ]
+
+        # Filter for music-related company specialties
+        music_related_specialities = company_specialities_df[
+            company_specialities_df['speciality'].str.contains("music", case=False, na=False)
+        ]
+
+        #st.title("Music-Related Job Insights & Company Specialities")
+
+        # Sidebar: Show raw data
+        if st.sidebar.checkbox("Show raw job postings data"):
+            st.subheader("Job Postings Data")
+            st.write(job_postings_df)
+
+        if st.sidebar.checkbox("Show raw company specialities data"):
+            st.subheader("Company Specialities Data")
+            st.write(company_specialities_df)
+
+        st.subheader("Top Job Titles in Music-Related Jobs")
+        top_job_titles = music_related_jobs['title'].value_counts()
+
+        # Create bar chart for top job titles
+        fig_job_titles = px.bar(top_job_titles, 
+                            x=top_job_titles.values,  # Use counts for x-axis
+                            y=top_job_titles.index,   # Use job titles for y-axis
+                            title="Top Job Titles in Music-Related Jobs",
+                            labels={'x': 'Count', 'y': 'Job Title'}, 
+                            orientation='h')
+        st.plotly_chart(fig_job_titles)
+
+
+        st.subheader("Top Locations for Music-Related Jobs")
+        top_locations = music_related_jobs['location'].value_counts()
+
+        # Create bar chart for top locations
+        fig_locations = px.bar(top_locations, x=top_locations.index, y=top_locations.values, 
+                            title="Top Job Locations for Music-Related Jobs",
+                            labels={'x': 'Location', 'y': 'Count'})
+        st.plotly_chart(fig_locations)
+
+        st.subheader("Top Music Specialities in Companies")
+        top_specialities = music_related_specialities['speciality'].value_counts()
+        # Create bar chart for top company specialities related to music
+        fig_specialities = px.bar(top_specialities, x=top_specialities.index, y=top_specialities.values, 
+                                title="Top Music Specialities in Companies",
+                                labels={'x': 'Speciality', 'y': 'Count'})
+        st.plotly_chart(fig_specialities)
