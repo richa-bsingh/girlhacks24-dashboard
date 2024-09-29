@@ -16,7 +16,7 @@ def get_mongo_data():
 
 
 # Base API URL
-BASE_API_URL = "http://app.discofy.us/docs"
+BASE_API_URL = "http://app.discofy.us"
 
 # Function to fetch songs data from the updated API endpoint and return as DataFrame
 def get_songs_data():
